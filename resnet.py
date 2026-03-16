@@ -34,7 +34,10 @@ import torch.nn.init as init
 
 from torch.autograd import Variable
 
-__all__ = ['ResNet', 'resnet20', 'resnet32', 'resnet44', 'resnet56', 'resnet110', 'resnet1202']
+# __all__ = ['ResNet', 'resnet20', 'resnet32', 'resnet44', 'resnet56', 'resnet110', 'resnet1202']
+
+# Add the plain models for comparison
+__all__ = ['ResNet', 'resnet20', 'resnet32', 'resnet44', 'resnet56', 'resnet110', 'resnet1202', 'plain20', 'plain56']
 
 def _weights_init(m):
     classname = m.__class__.__name__
@@ -82,6 +85,21 @@ class BasicBlock(nn.Module):
         out = F.relu(out)
         return out
 
+# Add a plain block for comparison
+class PlainBlock(nn.Module):
+    expansion = 1
+
+    def __init__(self, in_planes, planes, stride=1):
+        super(PlainBlock, self).__init__()
+        self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(planes)
+        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(planes)
+
+    def forward(self, x):
+        out = F.relu(self.bn1(self.conv1(x)))
+        out = F.relu(self.bn2(self.conv2(out)))
+        return out
 
 class ResNet(nn.Module):
     def __init__(self, block, num_blocks, num_classes=10):
@@ -139,6 +157,16 @@ def resnet110():
 
 def resnet1202():
     return ResNet(BasicBlock, [200, 200, 200])
+
+# Add plain models for comparison
+
+# 20 layers
+def plain20():
+    return ResNet(PlainBlock, [3, 3, 3])
+
+# 56 layers
+def plain56():
+    return ResNet(PlainBlock, [9, 9, 9])
 
 
 def test(net):

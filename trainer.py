@@ -2,6 +2,7 @@ import argparse
 import os
 import shutil
 import time
+import csv # new import for saving results to csv file
 
 import torch
 import torch.nn as nn
@@ -13,9 +14,14 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import resnet
 
+# model_names = sorted(name for name in resnet.__dict__
+#     if name.islower() and not name.startswith("__")
+#                      and name.startswith("resnet")
+#                      and callable(resnet.__dict__[name]))
+
 model_names = sorted(name for name in resnet.__dict__
     if name.islower() and not name.startswith("__")
-                     and name.startswith("resnet")
+                     and (name.startswith("resnet") or name.startswith("plain"))
                      and callable(resnet.__dict__[name]))
 
 print(model_names)
@@ -66,6 +72,11 @@ def main():
     # Check the save_dir exists or not
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
+
+    log_path = os.path.join(args.save_dir, 'training_log.csv')
+    with open(log_path, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(['epoch', 'train_loss', 'train_acc', 'val_acc'])
 
     model = torch.nn.DataParallel(resnet.__dict__[args.arch]())
     model.cuda()
@@ -135,12 +146,14 @@ def main():
 
         # train for one epoch
         print('current lr {:.5e}'.format(optimizer.param_groups[0]['lr']))
-        train(train_loader, model, criterion, optimizer, epoch)
+        train_loss, train_acc = train(train_loader, model, criterion, optimizer, epoch)
         lr_scheduler.step()
 
-        # evaluate on validation set
         prec1 = validate(val_loader, model, criterion)
-
+        with open(log_path, 'a', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow([epoch, train_loss, train_acc, prec1])
+        
         # remember best prec@1 and save checkpoint
         is_best = prec1 > best_prec1
         best_prec1 = max(prec1, best_prec1)
@@ -211,6 +224,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
                       epoch, i, len(train_loader), batch_time=batch_time,
                       data_time=data_time, loss=losses, top1=top1))
 
+    return losses.avg, top1.avg  # one level of indentation, outside the for loop
 
 def validate(val_loader, model, criterion):
     """
