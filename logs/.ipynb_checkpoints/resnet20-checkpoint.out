@@ -1,0 +1,9 @@
+/var/spool/slurm/slurmd/job10312429/slurm_script: line 29: /scratch/hjd3db/pytorch_resnet_cifar10/venv/bin/activate: No such file or directory
+Traceback (most recent call last):
+  File "/sfs/weka/scratch/hjd3db/resnet-test/pytorch_resnet_cifar10/trainer.py", line 7, in <module>
+    import torch
+  File "/home/hjd3db/.local/lib/python3.11/site-packages/torch/__init__.py", line 49, in <module>
+    from torch._utils import (
+  File "/home/hjd3db/.local/lib/python3.11/site-packages/torch/_utils.py", line 12, in <module>
+    from typing_extensions import deprecated, ParamSpec
+ImportError: cannot import name 'deprecated' from 'typing_extensions' (/apps/software/standard/mpi/gcc/11.4.0/openmpi/4.1.4/python/3.11.4/lib/python3.11/site-packages/typing_extensions.py)
